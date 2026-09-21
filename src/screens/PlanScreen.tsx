@@ -4,10 +4,20 @@ import { Sheet } from '../components/Sheet'
 import { WEEKDAYS } from '../dates'
 import { useStepsById, useStore } from '../store'
 import type { Weekday } from '../types'
+import { dayIds } from '../week'
 
 export function PlanScreen() {
-  const { state, addStep, addStepToDays, removeStepFromDay, moveStep, copyDay, removeStep, updateStep } =
-    useStore()
+  const {
+    state,
+    addStep,
+    addStepToDays,
+    removeStepFromDay,
+    setDayNote,
+    moveStep,
+    copyDay,
+    removeStep,
+    updateStep,
+  } = useStore()
   const byId = useStepsById()
   const today = new Date().getDay() as Weekday
   const [day, setDay] = useState<Weekday>(today)
@@ -17,18 +27,23 @@ export function PlanScreen() {
   const [copyTargets, setCopyTargets] = useState<Weekday[]>([])
   const [newName, setNewName] = useState('')
   const [newEmoji, setNewEmoji] = useState('✨')
+  const [newNote, setNewNote] = useState('')
   const [picked, setPicked] = useState<string[]>([])
   const [applyDays, setApplyDays] = useState<Weekday[]>([day])
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editEmoji, setEditEmoji] = useState('✨')
+  const [noteStepId, setNoteStepId] = useState<string | null>(null)
+  const [noteDraft, setNoteDraft] = useState('')
 
-  const ids = state.week[day]
+  const items = state.week[day]
+  const ids = dayIds(items)
   const unused = useMemo(
     () => state.steps.filter((s) => !ids.includes(s.id)),
     [state.steps, ids],
   )
   const label = WEEKDAYS.find((d) => d.id === day)?.full ?? ''
+  const noteStep = noteStepId ? byId[noteStepId] : undefined
 
   function toggleDay(list: Weekday[], id: Weekday): Weekday[] {
     return list.includes(id) ? list.filter((x) => x !== id) : [...list, id]
@@ -38,14 +53,16 @@ export function PlanScreen() {
     const name = newName.trim()
     if (!name) return
     const step = addStep(name, newEmoji)
-    addStepToDays(step.id, applyDays.length ? applyDays : [day])
+    addStepToDays(step.id, applyDays.length ? applyDays : [day], newNote)
     setNewName('')
+    setNewNote('')
     setAddOpen(false)
   }
 
   function addPicked() {
-    for (const id of picked) addStepToDays(id, applyDays.length ? applyDays : [day])
+    for (const id of picked) addStepToDays(id, applyDays.length ? applyDays : [day], newNote)
     setPicked([])
+    setNewNote('')
     setAddOpen(false)
   }
 
@@ -53,6 +70,12 @@ export function PlanScreen() {
     if (!editId || !editName.trim()) return
     updateStep(editId, { name: editName.trim(), emoji: editEmoji })
     setEditId(null)
+  }
+
+  function saveNote() {
+    if (!noteStepId) return
+    setDayNote(day, noteStepId, noteDraft)
+    setNoteStepId(null)
   }
 
   return (
@@ -85,20 +108,32 @@ export function PlanScreen() {
         </div>
       </div>
 
-      {ids.length === 0 ? (
+      {items.length === 0 ? (
         <div className="empty card">
           <h3>Empty {label}</h3>
           <p>Add steps for this day. You can reuse them across the week.</p>
         </div>
       ) : (
         <div className="group">
-          {ids.map((id, index) => {
-            const step = byId[id]
+          {items.map((item, index) => {
+            const step = byId[item.stepId]
             if (!step) return null
             return (
-              <div key={id} className="group-row">
+              <div key={item.stepId} className="group-row">
                 <span className="emoji">{step.emoji}</span>
-                <span className="grow row-title">{step.name}</span>
+                <button
+                  className="grow"
+                  style={{ textAlign: 'left' }}
+                  onClick={() => {
+                    setNoteStepId(item.stepId)
+                    setNoteDraft(item.note)
+                  }}
+                >
+                  <div className="row-title">{step.name}</div>
+                  <div className={`row-sub ${item.note ? '' : 'placeholder'}`}>
+                    {item.note || 'Add a note for this day'}
+                  </div>
+                </button>
                 <div className="tiny-btns">
                   <button onClick={() => moveStep(day, index, -1)} aria-label="Move up">
                     ↑
@@ -106,7 +141,7 @@ export function PlanScreen() {
                   <button onClick={() => moveStep(day, index, 1)} aria-label="Move down">
                     ↓
                   </button>
-                  <button onClick={() => removeStepFromDay(day, id)} aria-label="Remove">
+                  <button onClick={() => removeStepFromDay(day, item.stepId)} aria-label="Remove">
                     ×
                   </button>
                 </div>
@@ -128,6 +163,14 @@ export function PlanScreen() {
             value={newName}
             placeholder="e.g. Cold shower"
             onChange={(e) => setNewName(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label>Note for these days</label>
+          <textarea
+            value={newNote}
+            placeholder="e.g. retinol + moisturizer"
+            onChange={(e) => setNewNote(e.target.value)}
           />
         </div>
         <div className="field">
@@ -207,11 +250,7 @@ export function PlanScreen() {
         </div>
       </Sheet>
 
-      <Sheet
-        open={!!editId}
-        title="Edit step"
-        onClose={() => setEditId(null)}
-      >
+      <Sheet open={!!editId} title="Edit step" onClose={() => setEditId(null)}>
         <div className="field">
           <label>Name</label>
           <input value={editName} onChange={(e) => setEditName(e.target.value)} />
@@ -225,8 +264,27 @@ export function PlanScreen() {
         </button>
       </Sheet>
 
+      <Sheet
+        open={!!noteStepId}
+        title={noteStep ? `${noteStep.emoji} ${noteStep.name}` : 'Note'}
+        onClose={() => setNoteStepId(null)}
+      >
+        <p className="hint">Only for {label}. Other days keep their own notes.</p>
+        <div className="field">
+          <label>Note</label>
+          <textarea
+            value={noteDraft}
+            placeholder="e.g. cleanser, vitamin C, moisturizer"
+            onChange={(e) => setNoteDraft(e.target.value)}
+          />
+        </div>
+        <button className="primary" onClick={saveNote}>
+          Save note
+        </button>
+      </Sheet>
+
       <Sheet open={copyOpen} title={`Copy ${label}`} onClose={() => setCopyOpen(false)}>
-        <p className="hint">Replace the selected days with this day’s steps.</p>
+        <p className="hint">Replace the selected days with this day’s steps and notes.</p>
         <div className="day-copy">
           {WEEKDAYS.filter((d) => d.id !== day).map((d) => (
             <button

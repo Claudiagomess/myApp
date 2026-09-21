@@ -7,7 +7,12 @@ export type Step = {
   createdAt: string
 }
 
-export type WeekPlan = Record<Weekday, string[]>
+export type PlannedStep = {
+  stepId: string
+  note: string
+}
+
+export type WeekPlan = Record<Weekday, PlannedStep[]>
 
 export type CategoryKind = 'expense' | 'income'
 

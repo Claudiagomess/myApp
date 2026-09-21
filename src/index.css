@@ -156,13 +156,19 @@ textarea:focus {
   border: 1px solid var(--hairline);
 }
 
+textarea {
+  resize: vertical;
+  min-height: 88px;
+  line-height: 1.4;
+}
+
 .group-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   width: 100%;
   min-height: 58px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   text-align: left;
   border-bottom: 0.5px solid var(--hairline);
   color: var(--text);
@@ -185,6 +191,7 @@ textarea:focus {
   place-items: center;
   flex-shrink: 0;
   transition: 0.18s ease;
+  margin-top: 2px;
 }
 
 .check.on {
@@ -198,17 +205,25 @@ textarea:focus {
   width: 32px;
   text-align: center;
   flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .row-title {
   font-weight: 600;
   font-size: 16px;
+  display: block;
 }
 
 .row-sub {
   color: var(--muted);
-  font-size: 13px;
-  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.35;
+  margin-top: 3px;
+  display: block;
+}
+
+.row-sub.placeholder {
+  opacity: 0.7;
 }
 
 .grow {
@@ -595,6 +610,7 @@ textarea:focus {
 .tiny-btns {
   display: flex;
   gap: 4px;
+  margin-top: 2px;
 }
 
 .tiny-btns button {

@@ -2,7 +2,9 @@ import { addDays, lastNDates, monthKey, todayISO, weekdayOf } from './dates'
 import type { AppState, Category, Step } from './types'
 
 export function dayCompletion(state: AppState, date: string): { done: number; total: number; pct: number } {
-  const ids = state.week[weekdayOf(date)].filter((id) => state.steps.some((s) => s.id === id))
+  const ids = state.week[weekdayOf(date)]
+    .filter((item) => state.steps.some((s) => s.id === item.stepId))
+    .map((item) => item.stepId)
   const doneSet = new Set(state.completions[date] ?? [])
   const done = ids.filter((id) => doneSet.has(id)).length
   return { done, total: ids.length, pct: ids.length ? done / ids.length : 0 }
@@ -47,7 +49,7 @@ export function stepRates(state: AppState, dates: string[]): Array<{ step: Step;
       let done = 0
       let total = 0
       for (const date of dates) {
-        if (!state.week[weekdayOf(date)].includes(step.id)) continue
+        if (!state.week[weekdayOf(date)].some((item) => item.stepId === step.id)) continue
         total += 1
         if ((state.completions[date] ?? []).includes(step.id)) done += 1
       }

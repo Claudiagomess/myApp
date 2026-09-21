@@ -16,6 +16,7 @@ import type {
 } from './types'
 import { uid } from './format'
 import { defaultState, loadState, saveState } from './storage'
+import { hasStep, planned, withoutStep, normalizeWeek } from './week'
 
 type Store = {
   state: AppState
@@ -23,8 +24,9 @@ type Store = {
   updateStep: (id: string, patch: Partial<Pick<Step, 'name' | 'emoji'>>) => void
   removeStep: (id: string) => void
   setDaySteps: (day: Weekday, ids: string[]) => void
-  addStepToDays: (stepId: string, days: Weekday[]) => void
+  addStepToDays: (stepId: string, days: Weekday[], note?: string) => void
   removeStepFromDay: (day: Weekday, stepId: string) => void
+  setDayNote: (day: Weekday, stepId: string, note: string) => void
   moveStep: (day: Weekday, index: number, dir: -1 | 1) => void
   copyDay: (from: Weekday, to: Weekday[]) => void
   toggleComplete: (date: string, stepId: string) => void
@@ -84,13 +86,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ...s,
         steps: s.steps.filter((st) => st.id !== id),
         week: {
-          0: s.week[0].filter((x) => x !== id),
-          1: s.week[1].filter((x) => x !== id),
-          2: s.week[2].filter((x) => x !== id),
-          3: s.week[3].filter((x) => x !== id),
-          4: s.week[4].filter((x) => x !== id),
-          5: s.week[5].filter((x) => x !== id),
-          6: s.week[6].filter((x) => x !== id),
+          0: withoutStep(s.week[0], id),
+          1: withoutStep(s.week[1], id),
+          2: withoutStep(s.week[2], id),
+          3: withoutStep(s.week[3], id),
+          4: withoutStep(s.week[4], id),
+          5: withoutStep(s.week[5], id),
+          6: withoutStep(s.week[6], id),
         },
       }))
     },
@@ -99,17 +101,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const setDaySteps = useCallback(
     (day: Weekday, ids: string[]) => {
-      patch((s) => ({ ...s, week: { ...s.week, [day]: ids } }))
+      patch((s) => ({
+        ...s,
+        week: { ...s.week, [day]: ids.map((id) => planned(id)) },
+      }))
     },
     [patch],
   )
 
   const addStepToDays = useCallback(
-    (stepId: string, days: Weekday[]) => {
+    (stepId: string, days: Weekday[], note = '') => {
+      const trimmed = note.trim()
       patch((s) => {
         const week = { ...s.week }
         for (const day of days) {
-          if (!week[day].includes(stepId)) week[day] = [...week[day], stepId]
+          if (!hasStep(week[day], stepId)) {
+            week[day] = [...week[day], planned(stepId, trimmed)]
+          }
         }
         return { ...s, week }
       })
@@ -121,7 +129,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (day: Weekday, stepId: string) => {
       patch((s) => ({
         ...s,
-        week: { ...s.week, [day]: s.week[day].filter((id) => id !== stepId) },
+        week: { ...s.week, [day]: withoutStep(s.week[day], stepId) },
+      }))
+    },
+    [patch],
+  )
+
+  const setDayNote = useCallback(
+    (day: Weekday, stepId: string, note: string) => {
+      patch((s) => ({
+        ...s,
+        week: {
+          ...s.week,
+          [day]: s.week[day].map((item) =>
+            item.stepId === stepId ? { ...item, note: note.trim() } : item,
+          ),
+        },
       }))
     },
     [patch],
@@ -241,7 +264,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (parsed?.version !== 1 || !Array.isArray(parsed.steps)) {
         throw new Error('Invalid backup file')
       }
-      setState(persist(parsed))
+      setState(persist({ ...parsed, week: normalizeWeek(parsed.week) }))
     },
     [],
   )
@@ -259,6 +282,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDaySteps,
       addStepToDays,
       removeStepFromDay,
+      setDayNote,
       moveStep,
       copyDay,
       toggleComplete,
@@ -281,6 +305,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDaySteps,
       addStepToDays,
       removeStepFromDay,
+      setDayNote,
       moveStep,
       copyDay,
       toggleComplete,

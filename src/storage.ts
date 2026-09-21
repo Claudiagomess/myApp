@@ -1,5 +1,6 @@
-import type { AppState, Category, Step, WeekPlan } from './types'
+import type { AppState, Category, Step } from './types'
 import { uid } from './format'
+import { emptyWeek, planned, normalizeWeek } from './week'
 
 const KEY = 'life-app-v1'
 
@@ -27,10 +28,6 @@ const CATEGORY_SEEDS: Array<Omit<Category, 'id'>> = [
   { name: 'Other income', emoji: '📈', color: '#A8D5A2', kind: 'income' },
 ]
 
-function emptyWeek(): WeekPlan {
-  return { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
-}
-
 export function defaultState(): AppState {
   const now = new Date().toISOString()
   const steps: Step[] = STEP_SEEDS.map((s) => ({
@@ -42,13 +39,13 @@ export function defaultState(): AppState {
 
   const byName = Object.fromEntries(steps.map((s) => [s.name, s.id]))
   const week = emptyWeek()
-  week[1] = [byName['Brushing teeth'], byName['Gym'], byName['Skincare']]
-  week[2] = [byName['Brushing teeth'], byName['Plyos workout'], byName['Skincare']]
-  week[3] = [byName['Brushing teeth'], byName['Calisthenics'], byName['Skincare']]
-  week[4] = [byName['Brushing teeth'], byName['Gym'], byName['Skincare']]
-  week[5] = [byName['Brushing teeth'], byName['Running'], byName['Skincare']]
-  week[6] = [byName['Brushing teeth'], byName['Gym'], byName['Skincare']]
-  week[0] = [byName['Brushing teeth'], byName['Skincare']]
+  week[1] = [planned(byName['Brushing teeth']), planned(byName['Gym']), planned(byName['Skincare'])]
+  week[2] = [planned(byName['Brushing teeth']), planned(byName['Plyos workout']), planned(byName['Skincare'])]
+  week[3] = [planned(byName['Brushing teeth']), planned(byName['Calisthenics']), planned(byName['Skincare'])]
+  week[4] = [planned(byName['Brushing teeth']), planned(byName['Gym']), planned(byName['Skincare'])]
+  week[5] = [planned(byName['Brushing teeth']), planned(byName['Running']), planned(byName['Skincare'])]
+  week[6] = [planned(byName['Brushing teeth']), planned(byName['Gym']), planned(byName['Skincare'])]
+  week[0] = [planned(byName['Brushing teeth']), planned(byName['Skincare'])]
 
   return {
     version: 1,
@@ -70,7 +67,7 @@ export function loadState(): AppState {
     return {
       ...defaultState(),
       ...parsed,
-      week: { ...emptyWeek(), ...parsed.week },
+      week: normalizeWeek(parsed.week),
       completions: parsed.completions ?? {},
       settings: { currency: parsed.settings?.currency || 'EUR' },
     }

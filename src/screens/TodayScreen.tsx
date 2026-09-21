@@ -6,10 +6,10 @@ export function TodayScreen({ onOpenSettings }: { onOpenSettings: () => void }) 
   const { state, toggleComplete } = useStore()
   const byId = useStepsById()
   const date = todayISO()
-  const ids = state.week[weekdayOf(date)]
+  const items = state.week[weekdayOf(date)]
   const done = new Set(state.completions[date] ?? [])
-  const completed = ids.filter((id) => done.has(id)).length
-  const pct = ids.length ? completed / ids.length : 0
+  const completed = items.filter((item) => done.has(item.stepId)).length
+  const pct = items.length ? completed / items.length : 0
 
   return (
     <section className="screen">
@@ -28,33 +28,36 @@ export function TodayScreen({ onOpenSettings }: { onOpenSettings: () => void }) 
         <ProgressRing value={pct} />
         <div className="ring-label">
           <strong>
-            {completed}/{ids.length || 0}
+            {completed}/{items.length || 0}
           </strong>
-          {ids.length ? 'steps done' : 'nothing planned'}
+          {items.length ? 'steps done' : 'nothing planned'}
         </div>
       </div>
 
-      {ids.length === 0 ? (
+      {items.length === 0 ? (
         <div className="empty card">
           <h3>No steps today</h3>
           <p>Open Plan and build this day of the week however you want.</p>
         </div>
       ) : (
         <div className="group">
-          {ids.map((id) => {
-            const step = byId[id]
+          {items.map((item) => {
+            const step = byId[item.stepId]
             if (!step) return null
-            const on = done.has(id)
+            const on = done.has(item.stepId)
             return (
               <button
-                key={id}
+                key={item.stepId}
                 className="group-row"
-                onClick={() => toggleComplete(date, id)}
+                onClick={() => toggleComplete(date, item.stepId)}
               >
                 <span className={`check ${on ? 'on' : ''}`}>{on ? '✓' : ''}</span>
                 <span className="emoji">{step.emoji}</span>
-                <span className={`grow row-title ${on ? 'done-text' : ''}`}>
-                  {step.name}
+                <span className="grow">
+                  <span className={`row-title ${on ? 'done-text' : ''}`}>{step.name}</span>
+                  {item.note ? (
+                    <span className={`row-sub ${on ? 'done-text' : ''}`}>{item.note}</span>
+                  ) : null}
                 </span>
               </button>
             )
