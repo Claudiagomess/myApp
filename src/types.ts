@@ -12,6 +12,14 @@ export type PlannedStep = {
   note: string
 }
 
+export type OneOffStep = {
+  id: string
+  date: string
+  name: string
+  emoji: string
+  note: string
+}
+
 export type WeekPlan = Record<Weekday, PlannedStep[]>
 
 export type CategoryKind = 'expense' | 'income'
@@ -49,6 +57,7 @@ export type AppState = {
   steps: Step[]
   week: WeekPlan
   completions: Record<string, string[]>
+  oneOffs: OneOffStep[]
   categories: Category[]
   transactions: Transaction[]
   settings: Settings

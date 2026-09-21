@@ -2,9 +2,13 @@ import { addDays, lastNDates, monthKey, todayISO, weekdayOf } from './dates'
 import type { AppState, Category, Step } from './types'
 
 export function dayCompletion(state: AppState, date: string): { done: number; total: number; pct: number } {
-  const ids = state.week[weekdayOf(date)]
+  const weekIds = state.week[weekdayOf(date)]
     .filter((item) => state.steps.some((s) => s.id === item.stepId))
     .map((item) => item.stepId)
+  const extraIds = (state.oneOffs ?? [])
+    .filter((item) => item.date === date)
+    .map((item) => item.id)
+  const ids = [...weekIds, ...extraIds]
   const doneSet = new Set(state.completions[date] ?? [])
   const done = ids.filter((id) => doneSet.has(id)).length
   return { done, total: ids.length, pct: ids.length ? done / ids.length : 0 }

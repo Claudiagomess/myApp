@@ -10,6 +10,7 @@ import type {
   AppState,
   Category,
   CategoryKind,
+  OneOffStep,
   PillConfig,
   Step,
   Transaction,
@@ -31,6 +32,8 @@ type Store = {
   reorderDay: (day: Weekday, from: number, to: number) => void
   copyDay: (from: Weekday, to: Weekday[]) => void
   toggleComplete: (date: string, stepId: string) => void
+  addOneOff: (date: string, name: string, emoji: string, note?: string) => void
+  removeOneOff: (id: string) => void
   addCategory: (input: Omit<Category, 'id'>) => void
   updateCategory: (id: string, patch: Partial<Omit<Category, 'id'>>) => void
   removeCategory: (id: string) => void
@@ -207,6 +210,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [patch],
   )
 
+  const addOneOff = useCallback(
+    (date: string, name: string, emoji: string, note = '') => {
+      const trimmed = name.trim()
+      if (!trimmed) return
+      const item: OneOffStep = {
+        id: uid(),
+        date,
+        name: trimmed,
+        emoji,
+        note: note.trim(),
+      }
+      patch((s) => ({ ...s, oneOffs: [...(s.oneOffs ?? []), item] }))
+    },
+    [patch],
+  )
+
+  const removeOneOff = useCallback(
+    (id: string) => {
+      patch((s) => {
+        const oneOffs = (s.oneOffs ?? []).filter((item) => item.id !== id)
+        const completions = { ...s.completions }
+        for (const date of Object.keys(completions)) {
+          completions[date] = completions[date].filter((stepId) => stepId !== id)
+        }
+        return { ...s, oneOffs, completions }
+      })
+    },
+    [patch],
+  )
+
   const addCategory = useCallback(
     (input: Omit<Category, 'id'>) => {
       patch((s) => ({
@@ -342,6 +375,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       reorderDay,
       copyDay,
       toggleComplete,
+      addOneOff,
+      removeOneOff,
       addCategory,
       updateCategory,
       removeCategory,
@@ -370,6 +405,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       reorderDay,
       copyDay,
       toggleComplete,
+      addOneOff,
+      removeOneOff,
       addCategory,
       updateCategory,
       removeCategory,

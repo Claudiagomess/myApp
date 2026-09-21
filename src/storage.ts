@@ -1,4 +1,4 @@
-import type { AppState, Category, PillConfig, Step } from './types'
+import type { AppState, Category, OneOffStep, PillConfig, Step } from './types'
 import { uid } from './format'
 import { emptyWeek, planned, normalizeWeek } from './week'
 
@@ -52,6 +52,7 @@ export function defaultState(): AppState {
     steps,
     week,
     completions: {},
+    oneOffs: [],
     categories: CATEGORY_SEEDS.map((c) => ({ ...c, id: uid() })),
     transactions: [],
     settings: { currency: 'EUR' },
@@ -68,6 +69,7 @@ export function hydrateState(parsed: AppState): AppState {
     ...parsed,
     week: normalizeWeek(parsed.week),
     completions: parsed.completions ?? {},
+    oneOffs: normalizeOneOffs(parsed.oneOffs),
     settings: { currency: parsed.settings?.currency || 'EUR' },
     pill: normalizePill(parsed.pill),
     pillsTaken: flagMap(parsed.pillsTaken),
@@ -103,6 +105,24 @@ function normalizePill(raw: unknown): PillConfig {
     activeDays: Number.isFinite(activeDays) && activeDays > 0 ? Math.round(activeDays) : 21,
     breakDays: Number.isFinite(breakDays) && breakDays >= 0 ? Math.round(breakDays) : 7,
   }
+}
+
+function normalizeOneOffs(raw: unknown): OneOffStep[] {
+  if (!Array.isArray(raw)) return []
+  const out: OneOffStep[] = []
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue
+    const item = entry as Partial<OneOffStep>
+    if (!item.id || !item.date || !item.name) continue
+    out.push({
+      id: String(item.id),
+      date: String(item.date),
+      name: String(item.name),
+      emoji: String(item.emoji || '✨'),
+      note: String(item.note ?? ''),
+    })
+  }
+  return out
 }
 
 function flagMap(raw: unknown): Record<string, true> {
