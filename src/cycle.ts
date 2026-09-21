@@ -5,7 +5,15 @@ export type PillPhase =
   | { kind: 'unset' }
   | { kind: 'before'; packStart: string }
   | {
-      kind: 'active' | 'break'
+      kind: 'active'
+      day: number
+      of: number
+      packStart: string
+      packEnd: string
+      nextStart: string
+    }
+  | {
+      kind: 'break'
       day: number
       of: number
       packStart: string

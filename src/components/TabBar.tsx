@@ -23,18 +23,6 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
     ),
   },
   {
-    id: 'plan',
-    label: 'Plan',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M8 6h13M8 12h13M8 18h13" />
-        <circle cx="4" cy="6" r="1.2" fill="currentColor" />
-        <circle cx="4" cy="12" r="1.2" fill="currentColor" />
-        <circle cx="4" cy="18" r="1.2" fill="currentColor" />
-      </svg>
-    ),
-  },
-  {
     id: 'money',
     label: 'Money',
     icon: (

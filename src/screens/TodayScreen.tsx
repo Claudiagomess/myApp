@@ -1,3 +1,4 @@
+import { PillBanner } from '../components/PillBanner'
 import { ProgressRing } from '../components/ProgressRing'
 import { pillPhase } from '../cycle'
 import { formatLongDate, formatShortDate, greeting, todayISO, weekdayOf } from '../dates'
@@ -28,12 +29,7 @@ export function TodayScreen({ onOpenSettings }: { onOpenSettings: () => void }) 
       </p>
 
       {phase.kind === 'active' && (
-        <button className="card cycle-status" onClick={() => togglePillTaken(date)}>
-          <strong>{pillTaken ? 'Pill taken' : 'Take your pill'}</strong>
-          <span className="muted">
-            Day {phase.day} of {phase.of} · pack ends {formatShortDate(phase.packEnd)}
-          </span>
-        </button>
+        <PillBanner taken={pillTaken} phase={phase} onToggle={() => togglePillTaken(date)} />
       )}
       {phase.kind === 'break' && (
         <div className="card cycle-status">
@@ -57,7 +53,7 @@ export function TodayScreen({ onOpenSettings }: { onOpenSettings: () => void }) 
       {items.length === 0 ? (
         <div className="empty card">
           <h3>No steps today</h3>
-          <p>Open Plan and build this day of the week however you want.</p>
+          <p>Open Settings and tap Weekly plan to build this day.</p>
         </div>
       ) : (
         <div className="group">

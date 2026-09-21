@@ -28,7 +28,7 @@ type Store = {
   addStepToDays: (stepId: string, days: Weekday[], note?: string) => void
   removeStepFromDay: (day: Weekday, stepId: string) => void
   setDayNote: (day: Weekday, stepId: string, note: string) => void
-  moveStep: (day: Weekday, index: number, dir: -1 | 1) => void
+  reorderDay: (day: Weekday, from: number, to: number) => void
   copyDay: (from: Weekday, to: Weekday[]) => void
   toggleComplete: (date: string, stepId: string) => void
   addCategory: (input: Omit<Category, 'id'>) => void
@@ -163,13 +163,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [patch],
   )
 
-  const moveStep = useCallback(
-    (day: Weekday, index: number, dir: -1 | 1) => {
+  const reorderDay = useCallback(
+    (day: Weekday, from: number, to: number) => {
       patch((s) => {
         const list = [...s.week[day]]
-        const next = index + dir
-        if (next < 0 || next >= list.length) return s
-        ;[list[index], list[next]] = [list[next], list[index]]
+        if (
+          from === to ||
+          from < 0 ||
+          to < 0 ||
+          from >= list.length ||
+          to >= list.length
+        ) {
+          return s
+        }
+        const [item] = list.splice(from, 1)
+        list.splice(to, 0, item)
         return { ...s, week: { ...s.week, [day]: list } }
       })
     },
@@ -331,7 +339,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStepToDays,
       removeStepFromDay,
       setDayNote,
-      moveStep,
+      reorderDay,
       copyDay,
       toggleComplete,
       addCategory,
@@ -359,7 +367,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStepToDays,
       removeStepFromDay,
       setDayNote,
-      moveStep,
+      reorderDay,
       copyDay,
       toggleComplete,
       addCategory,

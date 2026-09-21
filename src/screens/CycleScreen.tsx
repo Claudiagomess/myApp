@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Sheet } from '../components/Sheet'
+import { PillBanner } from '../components/PillBanner'
 import { lastPeriodStart, pillPhase } from '../cycle'
 import {
   WEEKDAYS,
@@ -60,14 +61,11 @@ export function CycleScreen() {
         </div>
       )}
       {todayPhase.kind === 'active' && (
-        <button className="card cycle-status" onClick={() => togglePillTaken(today)}>
-          <strong>{takenToday ? 'Pill taken' : 'Take your pill'}</strong>
-          <span className="muted">
-            Day {todayPhase.day} of {todayPhase.of}
-            {' · '}pack ends {formatShortDate(todayPhase.packEnd)}
-            {' · '}next {formatShortDate(todayPhase.nextStart)}
-          </span>
-        </button>
+        <PillBanner
+          taken={takenToday}
+          phase={todayPhase}
+          onToggle={() => togglePillTaken(today)}
+        />
       )}
       {todayPhase.kind === 'break' && (
         <div className="card cycle-status">
@@ -112,7 +110,11 @@ export function CycleScreen() {
               <span>{Number(date.slice(8))}</span>
               <span className="cycle-dots">
                 {phase.kind === 'active' && <i className={`dot gold ${taken ? 'on' : ''}`} />}
-                {sex && <i className="dot sex on" />}
+                {sex && (
+                  <svg className="sex-heart" viewBox="0 0 12 12" aria-hidden>
+                    <path d="M6 10.4S1.2 7.2 1.2 4.35A2.55 2.55 0 0 1 6 3.15a2.55 2.55 0 0 1 4.8 1.2C10.8 7.2 6 10.4 6 10.4z" />
+                  </svg>
+                )}
               </span>
             </button>
           )
@@ -127,7 +129,10 @@ export function CycleScreen() {
           <i className="swatch" style={{ background: 'rgba(224, 122, 122, 0.55)' }} /> Period
         </span>
         <span>
-          <i className="dot sex on" /> Sex
+          <svg className="sex-heart" viewBox="0 0 12 12" aria-hidden>
+            <path d="M6 10.4S1.2 7.2 1.2 4.35A2.55 2.55 0 0 1 6 3.15a2.55 2.55 0 0 1 4.8 1.2C10.8 7.2 6 10.4 6 10.4z" />
+          </svg>{' '}
+          Sex
         </span>
       </div>
 

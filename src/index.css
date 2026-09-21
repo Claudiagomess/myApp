@@ -82,11 +82,32 @@ textarea:focus {
   overflow: hidden;
 }
 
+.shell {
+  position: relative;
+  height: 100%;
+}
+
 .app {
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: calc(12px + var(--safe-top)) 16px calc(var(--tab-h) + var(--safe-bottom) + 28px);
+}
+
+.plan-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(12px + var(--safe-top)) 16px calc(28px + var(--safe-bottom));
+  background:
+    radial-gradient(1200px 480px at 50% -120px, rgba(232, 184, 109, 0.09), transparent 55%),
+    var(--bg);
+}
+
+.plan-overlay.sorting {
+  overflow: hidden;
 }
 
 .screen {
@@ -180,6 +201,52 @@ textarea {
 
 .group-row:active {
   background: rgba(255, 255, 255, 0.04);
+}
+
+.group.sorting {
+  overflow: visible;
+}
+
+.group.sorting .group-row {
+  transition: transform 0.18s ease;
+  touch-action: pan-y;
+}
+
+.group.sorting .group-row:active {
+  background: transparent;
+}
+
+.group-row.dragging {
+  z-index: 2;
+  position: relative;
+  transition: none;
+  background: var(--surface-2);
+  box-shadow: var(--shadow);
+  border-radius: 14px;
+  border-bottom-color: transparent;
+}
+
+.drag-handle {
+  width: 28px;
+  height: 36px;
+  margin: -4px 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  touch-action: none;
+  cursor: grab;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.drag-handle:active,
+.group-row.dragging .drag-handle {
+  cursor: grabbing;
+}
+
+.drag-handle svg {
+  width: 16px;
+  height: 16px;
 }
 
 .check {
@@ -534,7 +601,7 @@ textarea {
   height: calc(var(--tab-h) + var(--safe-bottom));
   padding: 6px 8px var(--safe-bottom);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   background: rgba(12, 12, 14, 0.86);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -642,6 +709,7 @@ textarea {
   display: flex;
   gap: 4px;
   margin-top: 2px;
+  align-self: center;
 }
 
 .tiny-btns button {
@@ -711,17 +779,63 @@ textarea {
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
-  padding: 16px;
+  padding: 14px 16px;
   margin-bottom: 12px;
   text-align: left;
   width: 100%;
   color: inherit;
 }
 
+.cycle-status.due,
+.cycle-status.taken {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+
+.cycle-status.due {
+  border-color: rgba(232, 184, 109, 0.55);
+  background: var(--accent-dim);
+}
+
+.cycle-status.taken {
+  border-color: rgba(125, 206, 160, 0.45);
+  background: rgba(125, 206, 160, 0.14);
+}
+
 .cycle-status strong {
   font-family: var(--serif);
   font-size: 20px;
   font-weight: 600;
+  display: block;
+}
+
+.cycle-status.taken strong {
+  color: var(--green);
+}
+
+.cycle-status .muted {
+  display: block;
+}
+
+.cycle-check {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(232, 184, 109, 0.7);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1408;
+}
+
+.cycle-status.taken .cycle-check,
+.cycle-check.on {
+  background: var(--green);
+  border-color: var(--green);
+  color: #102016;
 }
 
 .cycle-month {
@@ -773,7 +887,7 @@ textarea {
 .cycle-dots {
   display: flex;
   gap: 3px;
-  height: 6px;
+  height: 8px;
   align-items: center;
 }
 
@@ -794,9 +908,12 @@ textarea {
   color: var(--accent);
 }
 
-.dot.sex {
-  color: #c9a0dc;
-  border-color: #c9a0dc;
+.sex-heart {
+  width: 8px;
+  height: 8px;
+  fill: #c9a0dc;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 .cycle-legend {

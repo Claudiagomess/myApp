@@ -7,9 +7,11 @@ const CURRENCIES = ['EUR', 'USD', 'GBP', 'BRL', 'CHF']
 export function SettingsSheet({
   open,
   onClose,
+  onOpenPlan,
 }: {
   open: boolean
   onClose: () => void
+  onOpenPlan: () => void
 }) {
   const { state, setCurrency, exportJson, importJson, resetAll } = useStore()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -32,6 +34,22 @@ export function SettingsSheet({
         Everything lives on this device. Export a backup if you also use another phone or
         computer.
       </p>
+      <div className="group" style={{ margin: '12px 0 18px' }}>
+        <button
+          className="group-row"
+          onClick={() => {
+            onClose()
+            onOpenPlan()
+          }}
+        >
+          <span style={{ fontSize: 22, lineHeight: 1 }}>🗓️</span>
+          <span className="grow">
+            <span className="row-title">Weekly plan</span>
+            <span className="row-sub">Routine for each day of the week</span>
+          </span>
+          <span className="muted">›</span>
+        </button>
+      </div>
       <div className="field">
         <label>Currency</label>
         <select value={state.settings.currency} onChange={(e) => setCurrency(e.target.value)}>

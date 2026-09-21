@@ -58,4 +58,4 @@ export type AppState = {
   sexDays: Record<string, true>
 }
 
-export type TabId = 'today' | 'cycle' | 'plan' | 'money' | 'stats'
+export type TabId = 'today' | 'cycle' | 'money' | 'stats'

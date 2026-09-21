@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { EmojiGrid, STEP_EMOJIS } from '../components/EmojiGrid'
 import { Sheet } from '../components/Sheet'
 import { WEEKDAYS } from '../dates'
@@ -6,14 +6,51 @@ import { useStepsById, useStore } from '../store'
 import type { Weekday } from '../types'
 import { dayIds } from '../week'
 
-export function PlanScreen() {
+type DragState = {
+  pointerId: number
+  from: number
+  to: number
+  startY: number
+  dy: number
+  heights: number[]
+}
+
+function targetIndex(from: number, dy: number, heights: number[]): number {
+  const mids: number[] = []
+  let top = 0
+  for (const h of heights) {
+    mids.push(top + h / 2)
+    top += h
+  }
+  const draggedMid = mids[from] + dy
+  let best = 0
+  let bestDist = Infinity
+  for (let i = 0; i < mids.length; i++) {
+    const dist = Math.abs(mids[i] - draggedMid)
+    if (dist < bestDist) {
+      bestDist = dist
+      best = i
+    }
+  }
+  return best
+}
+
+function rowShift(index: number, drag: DragState): number {
+  const { from, to, dy, heights } = drag
+  if (index === from) return dy
+  if (from < to && index > from && index <= to) return -heights[from]
+  if (from > to && index >= to && index < from) return heights[from]
+  return 0
+}
+
+export function PlanScreen({ onBack }: { onBack: () => void }) {
   const {
     state,
     addStep,
     addStepToDays,
     removeStepFromDay,
     setDayNote,
-    moveStep,
+    reorderDay,
     copyDay,
     removeStep,
     updateStep,
@@ -35,6 +72,10 @@ export function PlanScreen() {
   const [editEmoji, setEditEmoji] = useState('✨')
   const [noteStepId, setNoteStepId] = useState<string | null>(null)
   const [noteDraft, setNoteDraft] = useState('')
+  const [drag, setDrag] = useState<DragState | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<DragState | null>(null)
+  const dragging = drag !== null
 
   const items = state.week[day]
   const ids = dayIds(items)
@@ -78,9 +119,81 @@ export function PlanScreen() {
     setNoteStepId(null)
   }
 
+  useEffect(() => {
+    dragRef.current = null
+    setDrag(null)
+  }, [day])
+
+  useEffect(() => {
+    if (!dragging) return
+    const overlay = document.querySelector('.plan-overlay')
+    overlay?.classList.add('sorting')
+    document.body.classList.add('sorting')
+
+    const onMove = (event: PointerEvent) => {
+      const current = dragRef.current
+      if (!current || event.pointerId !== current.pointerId) return
+      const dy = event.clientY - current.startY
+      const next = { ...current, dy, to: targetIndex(current.from, dy, current.heights) }
+      dragRef.current = next
+      setDrag(next)
+    }
+
+    const onUp = (event: PointerEvent) => {
+      const current = dragRef.current
+      if (!current || event.pointerId !== current.pointerId) return
+      if (current.from !== current.to) reorderDay(day, current.from, current.to)
+      dragRef.current = null
+      setDrag(null)
+    }
+
+    const prevent = (event: TouchEvent) => event.preventDefault()
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    document.addEventListener('touchmove', prevent, { passive: false })
+    return () => {
+      overlay?.classList.remove('sorting')
+      document.body.classList.remove('sorting')
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      document.removeEventListener('touchmove', prevent)
+    }
+  }, [dragging, day, reorderDay])
+
+  function startDrag(index: number, event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.button !== 0 || items.length < 2) return
+    const list = listRef.current
+    if (!list) return
+    const rows = Array.from(list.querySelectorAll<HTMLElement>('[data-sort-row]'))
+    const heights = rows.map((row) => row.getBoundingClientRect().height)
+    event.preventDefault()
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* capture is optional */
+    }
+    const next: DragState = {
+      pointerId: event.pointerId,
+      from: index,
+      to: index,
+      startY: event.clientY,
+      dy: 0,
+      heights,
+    }
+    dragRef.current = next
+    setDrag(next)
+  }
+
   return (
     <section className="screen">
-      <p className="kicker">Weekly template</p>
+      <div className="row-between">
+        <p className="kicker">Weekly template</p>
+        <button className="pill" onClick={onBack}>
+          Done
+        </button>
+      </div>
       <h1 className="serif-title">Plan</h1>
       <div className="pill-row">
         {WEEKDAYS.map((d) => (
@@ -114,17 +227,24 @@ export function PlanScreen() {
           <p>Add steps for this day. You can reuse them across the week.</p>
         </div>
       ) : (
-        <div className="group">
+        <div className={`group ${drag ? 'sorting' : ''}`} ref={listRef}>
           {items.map((item, index) => {
             const step = byId[item.stepId]
             if (!step) return null
+            const shift = drag ? rowShift(index, drag) : 0
             return (
-              <div key={item.stepId} className="group-row">
+              <div
+                key={item.stepId}
+                className={`group-row ${drag?.from === index ? 'dragging' : ''}`}
+                data-sort-row
+                style={shift ? { transform: `translateY(${shift}px)` } : undefined}
+              >
                 <span className="emoji">{step.emoji}</span>
                 <button
                   className="grow"
                   style={{ textAlign: 'left' }}
                   onClick={() => {
+                    if (drag) return
                     setNoteStepId(item.stepId)
                     setNoteDraft(item.note)
                   }}
@@ -134,13 +254,22 @@ export function PlanScreen() {
                     {item.note || 'Add a note for this day'}
                   </div>
                 </button>
+                <button
+                  className="drag-handle"
+                  type="button"
+                  aria-label="Drag to reorder"
+                  onPointerDown={(event) => startDrag(index, event)}
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <circle cx="5" cy="3.5" r="1.15" />
+                    <circle cx="11" cy="3.5" r="1.15" />
+                    <circle cx="5" cy="8" r="1.15" />
+                    <circle cx="11" cy="8" r="1.15" />
+                    <circle cx="5" cy="12.5" r="1.15" />
+                    <circle cx="11" cy="12.5" r="1.15" />
+                  </svg>
+                </button>
                 <div className="tiny-btns">
-                  <button onClick={() => moveStep(day, index, -1)} aria-label="Move up">
-                    ↑
-                  </button>
-                  <button onClick={() => moveStep(day, index, 1)} aria-label="Move down">
-                    ↓
-                  </button>
                   <button onClick={() => removeStepFromDay(day, item.stepId)} aria-label="Remove">
                     ×
                   </button>

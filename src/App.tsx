@@ -12,16 +12,27 @@ import type { TabId } from './types'
 function Shell() {
   const [tab, setTab] = useState<TabId>('today')
   const [settings, setSettings] = useState(false)
+  const [planOpen, setPlanOpen] = useState(false)
 
   return (
-    <div className="app">
-      {tab === 'today' && <TodayScreen onOpenSettings={() => setSettings(true)} />}
-      {tab === 'cycle' && <CycleScreen />}
-      {tab === 'plan' && <PlanScreen />}
-      {tab === 'money' && <MoneyScreen />}
-      {tab === 'stats' && <StatsScreen />}
-      <TabBar tab={tab} onChange={setTab} />
-      <SettingsSheet open={settings} onClose={() => setSettings(false)} />
+    <div className="shell">
+      <div className="app">
+        {tab === 'today' && <TodayScreen onOpenSettings={() => setSettings(true)} />}
+        {tab === 'cycle' && <CycleScreen />}
+        {tab === 'money' && <MoneyScreen />}
+        {tab === 'stats' && <StatsScreen />}
+        <TabBar tab={tab} onChange={setTab} />
+        <SettingsSheet
+          open={settings}
+          onClose={() => setSettings(false)}
+          onOpenPlan={() => setPlanOpen(true)}
+        />
+      </div>
+      {planOpen && (
+        <div className="plan-overlay">
+          <PlanScreen onBack={() => setPlanOpen(false)} />
+        </div>
+      )}
     </div>
   )
 }
