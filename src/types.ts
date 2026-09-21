@@ -38,6 +38,12 @@ export type Settings = {
   currency: string
 }
 
+export type PillConfig = {
+  startDate: string | null
+  activeDays: number
+  breakDays: number
+}
+
 export type AppState = {
   version: 1
   steps: Step[]
@@ -46,6 +52,10 @@ export type AppState = {
   categories: Category[]
   transactions: Transaction[]
   settings: Settings
+  pill: PillConfig
+  pillsTaken: Record<string, true>
+  periodDays: Record<string, true>
+  sexDays: Record<string, true>
 }
 
-export type TabId = 'today' | 'plan' | 'money' | 'stats'
+export type TabId = 'today' | 'cycle' | 'plan' | 'money' | 'stats'

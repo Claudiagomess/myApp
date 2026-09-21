@@ -1,15 +1,18 @@
 import { ProgressRing } from '../components/ProgressRing'
-import { formatLongDate, greeting, todayISO, weekdayOf } from '../dates'
+import { pillPhase } from '../cycle'
+import { formatLongDate, formatShortDate, greeting, todayISO, weekdayOf } from '../dates'
 import { useStepsById, useStore } from '../store'
 
 export function TodayScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
-  const { state, toggleComplete } = useStore()
+  const { state, toggleComplete, togglePillTaken } = useStore()
   const byId = useStepsById()
   const date = todayISO()
   const items = state.week[weekdayOf(date)]
   const done = new Set(state.completions[date] ?? [])
   const completed = items.filter((item) => done.has(item.stepId)).length
   const pct = items.length ? completed / items.length : 0
+  const phase = pillPhase(state.pill, date)
+  const pillTaken = !!state.pillsTaken[date]
 
   return (
     <section className="screen">
@@ -23,6 +26,23 @@ export function TodayScreen({ onOpenSettings }: { onOpenSettings: () => void }) 
       <p className="hint" style={{ marginTop: -10 }}>
         {formatLongDate(date)}
       </p>
+
+      {phase.kind === 'active' && (
+        <button className="card cycle-status" onClick={() => togglePillTaken(date)}>
+          <strong>{pillTaken ? 'Pill taken' : 'Take your pill'}</strong>
+          <span className="muted">
+            Day {phase.day} of {phase.of} · pack ends {formatShortDate(phase.packEnd)}
+          </span>
+        </button>
+      )}
+      {phase.kind === 'break' && (
+        <div className="card cycle-status">
+          <strong>
+            Break day {phase.day} of {phase.of}
+          </strong>
+          <span className="muted">Next pack {formatShortDate(phase.nextStart)}</span>
+        </div>
+      )}
 
       <div className="card progress-wrap">
         <ProgressRing value={pct} />

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { TabBar } from './components/TabBar'
+import { CycleScreen } from './screens/CycleScreen'
 import { MoneyScreen } from './screens/MoneyScreen'
 import { PlanScreen } from './screens/PlanScreen'
 import { SettingsSheet } from './screens/SettingsSheet'
@@ -15,6 +16,7 @@ function Shell() {
   return (
     <div className="app">
       {tab === 'today' && <TodayScreen onOpenSettings={() => setSettings(true)} />}
+      {tab === 'cycle' && <CycleScreen />}
       {tab === 'plan' && <PlanScreen />}
       {tab === 'money' && <MoneyScreen />}
       {tab === 'stats' && <StatsScreen />}

@@ -10,13 +10,14 @@ import type {
   AppState,
   Category,
   CategoryKind,
+  PillConfig,
   Step,
   Transaction,
   Weekday,
 } from './types'
 import { uid } from './format'
-import { defaultState, loadState, saveState } from './storage'
-import { hasStep, planned, withoutStep, normalizeWeek } from './week'
+import { defaultState, hydrateState, loadState, saveState } from './storage'
+import { hasStep, planned, withoutStep } from './week'
 
 type Store = {
   state: AppState
@@ -37,6 +38,11 @@ type Store = {
   updateTransaction: (id: string, patch: Partial<Omit<Transaction, 'id' | 'createdAt'>>) => void
   removeTransaction: (id: string) => void
   setCurrency: (currency: string) => void
+  setPillConfig: (patch: Partial<PillConfig>) => void
+  startPack: (date: string) => void
+  togglePeriod: (date: string) => void
+  toggleSex: (date: string) => void
+  togglePillTaken: (date: string) => void
   exportJson: () => string
   importJson: (raw: string) => void
   resetAll: () => void
@@ -46,6 +52,13 @@ const StoreContext = createContext<Store | null>(null)
 
 function persist(next: AppState): AppState {
   saveState(next)
+  return next
+}
+
+function toggleFlag(map: Record<string, true>, date: string): Record<string, true> {
+  const next = { ...map }
+  if (next[date]) delete next[date]
+  else next[date] = true
   return next
 }
 
@@ -256,6 +269,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [patch],
   )
 
+  const setPillConfig = useCallback(
+    (next: Partial<PillConfig>) => {
+      patch((s) => ({ ...s, pill: { ...s.pill, ...next } }))
+    },
+    [patch],
+  )
+
+  const startPack = useCallback(
+    (date: string) => {
+      patch((s) => ({ ...s, pill: { ...s.pill, startDate: date } }))
+    },
+    [patch],
+  )
+
+  const togglePeriod = useCallback(
+    (date: string) => {
+      patch((s) => ({ ...s, periodDays: toggleFlag(s.periodDays, date) }))
+    },
+    [patch],
+  )
+
+  const toggleSex = useCallback(
+    (date: string) => {
+      patch((s) => ({ ...s, sexDays: toggleFlag(s.sexDays, date) }))
+    },
+    [patch],
+  )
+
+  const togglePillTaken = useCallback(
+    (date: string) => {
+      patch((s) => ({ ...s, pillsTaken: toggleFlag(s.pillsTaken, date) }))
+    },
+    [patch],
+  )
+
   const exportJson = useCallback(() => JSON.stringify(state, null, 2), [state])
 
   const importJson = useCallback(
@@ -264,7 +312,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (parsed?.version !== 1 || !Array.isArray(parsed.steps)) {
         throw new Error('Invalid backup file')
       }
-      setState(persist({ ...parsed, week: normalizeWeek(parsed.week) }))
+      setState(persist(hydrateState(parsed)))
     },
     [],
   )
@@ -293,6 +341,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateTransaction,
       removeTransaction,
       setCurrency,
+      setPillConfig,
+      startPack,
+      togglePeriod,
+      toggleSex,
+      togglePillTaken,
       exportJson,
       importJson,
       resetAll,
@@ -316,6 +369,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateTransaction,
       removeTransaction,
       setCurrency,
+      setPillConfig,
+      startPack,
+      togglePeriod,
+      toggleSex,
+      togglePillTaken,
       exportJson,
       importJson,
       resetAll,

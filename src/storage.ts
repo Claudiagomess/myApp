@@ -1,4 +1,4 @@
-import type { AppState, Category, Step } from './types'
+import type { AppState, Category, PillConfig, Step } from './types'
 import { uid } from './format'
 import { emptyWeek, planned, normalizeWeek } from './week'
 
@@ -55,6 +55,24 @@ export function defaultState(): AppState {
     categories: CATEGORY_SEEDS.map((c) => ({ ...c, id: uid() })),
     transactions: [],
     settings: { currency: 'EUR' },
+    pill: { startDate: null, activeDays: 21, breakDays: 7 },
+    pillsTaken: {},
+    periodDays: {},
+    sexDays: {},
+  }
+}
+
+export function hydrateState(parsed: AppState): AppState {
+  return {
+    ...defaultState(),
+    ...parsed,
+    week: normalizeWeek(parsed.week),
+    completions: parsed.completions ?? {},
+    settings: { currency: parsed.settings?.currency || 'EUR' },
+    pill: normalizePill(parsed.pill),
+    pillsTaken: flagMap(parsed.pillsTaken),
+    periodDays: flagMap(parsed.periodDays),
+    sexDays: flagMap(parsed.sexDays),
   }
 }
 
@@ -64,13 +82,7 @@ export function loadState(): AppState {
     if (!raw) return defaultState()
     const parsed = JSON.parse(raw) as AppState
     if (parsed?.version !== 1) return defaultState()
-    return {
-      ...defaultState(),
-      ...parsed,
-      week: normalizeWeek(parsed.week),
-      completions: parsed.completions ?? {},
-      settings: { currency: parsed.settings?.currency || 'EUR' },
-    }
+    return hydrateState(parsed)
   } catch {
     return defaultState()
   }
@@ -78,4 +90,26 @@ export function loadState(): AppState {
 
 export function saveState(state: AppState): void {
   localStorage.setItem(KEY, JSON.stringify(state))
+}
+
+function normalizePill(raw: unknown): PillConfig {
+  const fallback: PillConfig = { startDate: null, activeDays: 21, breakDays: 7 }
+  if (!raw || typeof raw !== 'object') return fallback
+  const p = raw as Partial<PillConfig>
+  const activeDays = Number(p.activeDays)
+  const breakDays = Number(p.breakDays)
+  return {
+    startDate: typeof p.startDate === 'string' && p.startDate ? p.startDate : null,
+    activeDays: Number.isFinite(activeDays) && activeDays > 0 ? Math.round(activeDays) : 21,
+    breakDays: Number.isFinite(breakDays) && breakDays >= 0 ? Math.round(breakDays) : 7,
+  }
+}
+
+function flagMap(raw: unknown): Record<string, true> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const out: Record<string, true> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (value) out[key] = true
+  }
+  return out
 }

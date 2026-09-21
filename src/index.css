@@ -534,7 +534,7 @@ textarea {
   height: calc(var(--tab-h) + var(--safe-bottom));
   padding: 6px 8px var(--safe-bottom);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   background: rgba(12, 12, 14, 0.86);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -704,4 +704,107 @@ textarea {
   font-size: 22px;
   font-family: var(--serif);
   font-weight: 600;
+}
+
+.cycle-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px;
+  margin-bottom: 12px;
+  text-align: left;
+  width: 100%;
+  color: inherit;
+}
+
+.cycle-status strong {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.cycle-month {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.cycle-cal {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cycle-dow {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  padding-bottom: 4px;
+}
+
+.cycle-day {
+  min-height: 48px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cycle-day.today {
+  border-color: var(--accent);
+}
+
+.cycle-day.period {
+  background: rgba(224, 122, 122, 0.22);
+}
+
+.cycle-day.break {
+  opacity: 0.72;
+}
+
+.cycle-dots {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+  align-items: center;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 184, 109, 0.55);
+  display: inline-block;
+}
+
+.dot.on {
+  background: currentColor;
+  border-color: currentColor;
+}
+
+.dot.gold {
+  color: var(--accent);
+}
+
+.dot.sex {
+  color: #c9a0dc;
+  border-color: #c9a0dc;
+}
+
+.cycle-legend {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  align-items: center;
 }

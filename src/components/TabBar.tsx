@@ -13,6 +13,16 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
     ),
   },
   {
+    id: 'cycle',
+    label: 'Cycle',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 4a8 8 0 0 0 0 16" />
+      </svg>
+    ),
+  },
+  {
     id: 'plan',
     label: 'Plan',
     icon: (

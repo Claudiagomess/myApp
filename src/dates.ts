@@ -79,3 +79,24 @@ export function shiftMonth(iso: string, delta: number): string {
 export function lastNDates(n: number, from = todayISO()): string[] {
   return Array.from({ length: n }, (_, i) => addDays(from, -(n - 1 - i)))
 }
+
+export function daysBetween(from: string, to: string): number {
+  const a = parseISO(from)
+  const b = parseISO(to)
+  return Math.round((b.getTime() - a.getTime()) / 86400000)
+}
+
+export function formatMonthYear(iso: string): string {
+  return parseISO(iso).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+}
+
+export function monthCells(monthISO: string): Array<string | null> {
+  const start = startOfMonth(monthISO)
+  const count = daysInMonth(monthISO)
+  const wd = weekdayOf(start)
+  const lead = wd === 0 ? 6 : wd - 1
+  const cells: Array<string | null> = Array.from({ length: lead }, () => null)
+  for (let i = 0; i < count; i++) cells.push(addDays(start, i))
+  while (cells.length % 7 !== 0) cells.push(null)
+  return cells
+}
