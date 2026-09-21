@@ -574,11 +574,13 @@ textarea {
 
 .sheet {
   width: min(100%, 430px);
-  max-height: 88dvh;
-  overflow: auto;
+  max-height: 86dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg-elev);
   border-radius: 22px 22px 0 0;
-  padding: 8px 16px calc(18px + var(--safe-bottom));
+  padding: 4px 16px 0;
   animation: sheet-up 0.28s ease;
 }
 
@@ -594,17 +596,46 @@ textarea {
 }
 
 .sheet-handle {
+  width: 44px;
+  height: 22px;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sheet-handle::after {
+  content: '';
   width: 36px;
   height: 4px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.18);
-  margin: 6px auto 12px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 2px 0 10px;
 }
 
 .sheet h2 {
   font-family: var(--serif);
   font-size: 24px;
-  margin: 0 0 14px;
+  margin: 0;
+  min-width: 0;
+}
+
+.sheet-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(18px + var(--safe-bottom));
+  min-height: 0;
 }
 
 .tiny-btns {
