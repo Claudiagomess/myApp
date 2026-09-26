@@ -1,4 +1,4 @@
-import type { AppState, Category, OneOffStep, PillConfig, Step } from './types'
+import type { AppState, Category, OneOffStep, PillConfig, RecurEvery, Recurring, Step } from './types'
 import { uid } from './format'
 import { emptyWeek, planned, normalizeWeek } from './week'
 
@@ -55,6 +55,7 @@ export function defaultState(): AppState {
     oneOffs: [],
     categories: CATEGORY_SEEDS.map((c) => ({ ...c, id: uid() })),
     transactions: [],
+    recurring: [],
     settings: { currency: 'EUR' },
     pill: { startDate: null, activeDays: 21, breakDays: 7 },
     pillsTaken: {},
@@ -70,6 +71,7 @@ export function hydrateState(parsed: AppState): AppState {
     week: normalizeWeek(parsed.week),
     completions: parsed.completions ?? {},
     oneOffs: normalizeOneOffs(parsed.oneOffs),
+    recurring: normalizeRecurring(parsed.recurring),
     settings: { currency: parsed.settings?.currency || 'EUR' },
     pill: normalizePill(parsed.pill),
     pillsTaken: flagMap(parsed.pillsTaken),
@@ -120,6 +122,30 @@ function normalizeOneOffs(raw: unknown): OneOffStep[] {
       name: String(item.name),
       emoji: String(item.emoji || '✨'),
       note: String(item.note ?? ''),
+    })
+  }
+  return out
+}
+
+function normalizeRecurring(raw: unknown): Recurring[] {
+  if (!Array.isArray(raw)) return []
+  const out: Recurring[] = []
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue
+    const item = entry as Partial<Recurring>
+    const every = item.every
+    const amount = Number(item.amount)
+    if (!item.id || !item.categoryId || !item.startDate) continue
+    if (every !== 'day' && every !== 'week' && every !== 'month') continue
+    if (!Number.isFinite(amount) || amount <= 0) continue
+    out.push({
+      id: String(item.id),
+      kind: item.kind === 'income' ? 'income' : 'expense',
+      amount,
+      categoryId: String(item.categoryId),
+      note: String(item.note ?? ''),
+      every: every as RecurEvery,
+      startDate: String(item.startDate),
     })
   }
   return out

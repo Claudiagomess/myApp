@@ -36,6 +36,20 @@ export function monthKey(iso: string): string {
   return iso.slice(0, 7)
 }
 
+export function addMonths(iso: string, months: number): string {
+  const d = parseISO(iso)
+  const day = d.getDate()
+  const target = new Date(d.getFullYear(), d.getMonth() + months, 1)
+  const last = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+  target.setDate(Math.min(day, last))
+  return todayISO(target)
+}
+
+export function monthEnd(month: string): string {
+  const start = `${month}-01`
+  return `${month}-${String(daysInMonth(start)).padStart(2, '0')}`
+}
+
 export function formatLongDate(iso: string): string {
   return parseISO(iso).toLocaleDateString(undefined, {
     weekday: 'long',

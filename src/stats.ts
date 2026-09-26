@@ -1,4 +1,5 @@
 import { addDays, lastNDates, monthKey, todayISO, weekdayOf } from './dates'
+import { recurringAmountInMonth, occurrencesInMonth } from './recurrences'
 import type { AppState, Category, Step } from './types'
 
 export function dayCompletion(state: AppState, date: string): { done: number; total: number; pct: number } {
@@ -83,7 +84,8 @@ export function monthTotals(state: AppState, key: string): { income: number; exp
     if (t.kind === 'income') income += t.amount
     else expense += t.amount
   }
-  return { income, expense }
+  const extra = recurringAmountInMonth(state.recurring ?? [], key)
+  return { income: income + extra.income, expense: expense + extra.expense }
 }
 
 export function categorySpend(
@@ -95,6 +97,12 @@ export function categorySpend(
   for (const t of state.transactions) {
     if (t.kind !== 'expense' || !t.date.startsWith(key)) continue
     map.set(t.categoryId, (map.get(t.categoryId) ?? 0) + t.amount)
+  }
+  for (const rule of state.recurring ?? []) {
+    if (rule.kind !== 'expense') continue
+    const n = occurrencesInMonth(rule, key).length
+    if (!n) continue
+    map.set(rule.categoryId, (map.get(rule.categoryId) ?? 0) + rule.amount * n)
   }
   return [...map.entries()]
     .map(([id, amount]) => ({

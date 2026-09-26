@@ -12,6 +12,7 @@ import type {
   CategoryKind,
   OneOffStep,
   PillConfig,
+  Recurring,
   Step,
   Transaction,
   Weekday,
@@ -40,6 +41,9 @@ type Store = {
   addTransaction: (input: Omit<Transaction, 'id' | 'createdAt'>) => void
   updateTransaction: (id: string, patch: Partial<Omit<Transaction, 'id' | 'createdAt'>>) => void
   removeTransaction: (id: string) => void
+  addRecurring: (input: Omit<Recurring, 'id'>) => void
+  updateRecurring: (id: string, patch: Partial<Omit<Recurring, 'id'>>) => void
+  removeRecurring: (id: string) => void
   setCurrency: (currency: string) => void
   setPillConfig: (patch: Partial<PillConfig>) => void
   startPack: (date: string) => void
@@ -266,6 +270,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ...s,
         categories: s.categories.filter((c) => c.id !== id),
         transactions: s.transactions.filter((t) => t.categoryId !== id),
+        recurring: (s.recurring ?? []).filter((r) => r.categoryId !== id),
       }))
     },
     [patch],
@@ -298,6 +303,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       patch((s) => ({
         ...s,
         transactions: s.transactions.filter((t) => t.id !== id),
+      }))
+    },
+    [patch],
+  )
+
+  const addRecurring = useCallback(
+    (input: Omit<Recurring, 'id'>) => {
+      const item: Recurring = { ...input, id: uid() }
+      patch((s) => ({ ...s, recurring: [item, ...(s.recurring ?? [])] }))
+    },
+    [patch],
+  )
+
+  const updateRecurring = useCallback(
+    (id: string, next: Partial<Omit<Recurring, 'id'>>) => {
+      patch((s) => ({
+        ...s,
+        recurring: (s.recurring ?? []).map((r) => (r.id === id ? { ...r, ...next } : r)),
+      }))
+    },
+    [patch],
+  )
+
+  const removeRecurring = useCallback(
+    (id: string) => {
+      patch((s) => ({
+        ...s,
+        recurring: (s.recurring ?? []).filter((r) => r.id !== id),
       }))
     },
     [patch],
@@ -383,6 +416,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addTransaction,
       updateTransaction,
       removeTransaction,
+      addRecurring,
+      updateRecurring,
+      removeRecurring,
       setCurrency,
       setPillConfig,
       startPack,
@@ -413,6 +449,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addTransaction,
       updateTransaction,
       removeTransaction,
+      addRecurring,
+      updateRecurring,
+      removeRecurring,
       setCurrency,
       setPillConfig,
       startPack,

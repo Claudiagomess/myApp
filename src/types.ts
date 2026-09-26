@@ -42,6 +42,18 @@ export type Transaction = {
   createdAt: string
 }
 
+export type RecurEvery = 'day' | 'week' | 'month'
+
+export type Recurring = {
+  id: string
+  kind: CategoryKind
+  amount: number
+  categoryId: string
+  note: string
+  every: RecurEvery
+  startDate: string
+}
+
 export type Settings = {
   currency: string
 }
@@ -60,6 +72,7 @@ export type AppState = {
   oneOffs: OneOffStep[]
   categories: Category[]
   transactions: Transaction[]
+  recurring: Recurring[]
   settings: Settings
   pill: PillConfig
   pillsTaken: Record<string, true>
